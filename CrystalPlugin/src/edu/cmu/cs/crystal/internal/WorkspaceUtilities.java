@@ -36,6 +36,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModel;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IParent;
@@ -46,8 +47,10 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -78,6 +81,8 @@ import edu.cmu.cs.crystal.util.Option;
 public class WorkspaceUtilities {
 
 	private static final Logger log = Logger.getLogger(WorkspaceUtilities.class.getName());
+	
+	public static IJavaProject javaProject;
 
 	/**
 	 * Traverses the workspace for CompilationUnits.
@@ -269,23 +274,27 @@ public class WorkspaceUtilities {
 	 * @return	the mapping from compilation unit to the AST roots of each
 	 */
 	public static Map<ICompilationUnit, ASTNode> parseCompilationUnits(List<ICompilationUnit> compilationUnits) {
-		if(compilationUnits == null)
+		if (compilationUnits == null) {
 			throw new CrystalRuntimeException("null list of compilation units");
-		
-		Map<ICompilationUnit, ASTNode> parsedCompilationUnits = new HashMap<ICompilationUnit, ASTNode>();
- 		Iterator<ICompilationUnit> iter = compilationUnits.iterator();
- 		ICompilationUnit compUnit = null;
- 		ASTParser parser = null;
- 		ASTNode node = null;
- 		for(; iter.hasNext() ;) {
- 			compUnit = iter.next();
- 	 		parser = ASTParser.newParser(AST.JLS3);
- 			parser.setResolveBindings(true);
- 			parser.setSource(compUnit);
- 			node = parser.createAST(null);
- 			parsedCompilationUnits.put(compUnit, node);
- 		}
- 		return parsedCompilationUnits;
+		}
+
+		ICompilationUnit[] compUnits = compilationUnits.toArray(new ICompilationUnit[0]);
+		final Map<ICompilationUnit, ASTNode> parsedCompilationUnits = new HashMap<ICompilationUnit, ASTNode>();
+		ASTParser parser = ASTParser.newParser(AST.JLS3);
+		parser.setResolveBindings(true);
+		parser.setProject(javaProject);
+		parser.createASTs(compUnits, new String[0], new ASTRequestor() {
+			@Override
+            public final void acceptAST(final ICompilationUnit unit, final CompilationUnit node) {
+				parsedCompilationUnits.put(unit, node);
+			}
+
+			@Override
+            public final void acceptBinding(final String key, final IBinding binding) {
+				// Do nothing
+			}
+		}, null);
+		return parsedCompilationUnits;
 	}
 	
 	/**
