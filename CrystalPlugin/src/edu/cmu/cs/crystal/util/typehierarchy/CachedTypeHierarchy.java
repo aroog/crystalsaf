@@ -289,8 +289,8 @@ public class CachedTypeHierarchy implements TypeHierarchy {
 				addInHierarchy(baseType, hierarchy);			
 				
 				//Yeah...that just wasted a bunch of resources. Clean up now...
-				Runtime r = Runtime.getRuntime();
-				r.gc();
+				// Runtime r = Runtime.getRuntime();
+				// r.gc();
 			}
 		} catch (JavaModelException e) {
 			//can't really do anything...
