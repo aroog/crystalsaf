@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import edu.cmu.cs.crystal.internal.WorkspaceUtilities;
@@ -79,7 +81,25 @@ public abstract class AbstractCrystalMethodAnalysis implements ICrystalAnalysis 
 					// analyze the remaining methods anyway
 					// don't catch errors so we terminate asap
 					err = e;
-					logger.log(Level.SEVERE, "Analysis " + getName() + " had an error in " + md.resolveBinding().getDeclaringClass().getQualifiedName() + " when analyzing " + md.resolveBinding().toString(), e);
+					
+					StringBuilder builder = new StringBuilder();
+					builder.append("Analysis ");
+					builder.append( getName());
+					builder.append( " had an error in ");
+					
+					IMethodBinding mBinding = md.resolveBinding();
+					if (mBinding != null) {
+						ITypeBinding declaringClass = mBinding.getDeclaringClass();
+						if (declaringClass != null) {
+							builder.append(declaringClass.getQualifiedName());
+						}
+					}
+					builder.append(" when analyzing method ");
+					if (mBinding != null) {
+						builder.append(md.toString());
+					}
+					
+					logger.log(Level.SEVERE, builder.toString() , e);
 				}
 			}
 			

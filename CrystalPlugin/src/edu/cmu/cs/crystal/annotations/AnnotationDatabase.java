@@ -195,11 +195,16 @@ public class AnnotationDatabase {
 		if (type.isPrimitive())
 			return Collections.emptyList();
 		if (type.isArray()) {
-			log.warning("Annotations for array type requested: " + type.getName());
+			// log.warning("Annotations for array type requested: " + type.getName());
+			
+			ITypeBinding componentType = type.getComponentType();
+			if(componentType.isPrimitive() ) {
+				return Collections.emptyList();
+			}
 		}
 
 		String name = type.getKey();
-
+		
 		List<ICrystalAnnotation> result = classes.get(name);
 		if (result == null) {
 			result = createAnnotations(type.getAnnotations());
